@@ -19,12 +19,12 @@ set -e
 
 go_install() {
   # Ask the user for the Go installation path
-  if [[ -z "$GO_INSTAL_DIR" ]]; then
+  if [[ -z "$GO_INSTALL_DIR" ]]; then
 
     # Remove any existing Go installation
-    if [[ -d "$HOME/.local/share/go" ]]; then
+    if [[ -d "$GO_INSTALL_DIR/go" ]]; then
       echo "Removing existing Go installation in $GO_INSTALL_DIR"
-      rm -rf "$HOME/.local/share/go"
+      rm -rf "$GO_INSTALL_DIR/go"
     fi
     if [[ -d "/usr/local/go" ]]; then
       echo "Removing existing Go installation in $GO_INSTALL_DIR"
