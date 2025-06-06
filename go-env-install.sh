@@ -17,10 +17,10 @@
 #   2. Run it:
 #     ./go-env-install.sh
 
-# Exit on error
+# Exit on error.
 set -e
 
-# Print text to the terminal
+# Print text to the terminal.
 print_err() {
   echo -e "\e[1;31m$1\e[0m" >&2
 }
@@ -94,7 +94,7 @@ main() {
 
       case $answer in
         [Yy]|"")
-          # TODO: Add support for other shells (e.g., zsh, fish)
+          # TODO: Add support for other shells (e.g., zsh, fish).
           echo "export PATH=\$PATH:$GO_INSTALL_DIR/go/bin" >> "$HOME/.bashrc"
           print_info "\e[1;32mGo has been added to your PATH."
           print_info "Please restart your terminal or run 'source ~/.bashrc' to apply the changes."
@@ -131,7 +131,7 @@ main() {
 
       case $answer in
         [Yy]|"")
-          # TODO: Add support for other shells (e.g., zsh, fish)
+          # TODO: Add support for other shells (e.g., zsh, fish).
           echo "export PATH=\$PATH:$GO_INSTALL_DIR/go/bin" >> "$HOME/.bashrc"
           print_info "\e[1;32mGo has been added to your PATH."
           print_info "Please restart your terminal or run 'source ~/.bashrc' to apply the changes."

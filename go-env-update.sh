@@ -20,10 +20,10 @@
 #   2. Run it:
 #     ./go-env-update.sh
 
-# Exit on error
+# Exit on error.
 set -e
 
-# Print text to the terminal
+# Print text to the terminal.
 print_err() {
   echo -e "\e[1;31m$1\e[0m" >&2
 }
