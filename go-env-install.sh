@@ -8,6 +8,9 @@
 # Supported Platforms and Architectures:
 #  - GNU/Linux (amd64)
 #
+# Supported Shells:
+#  - Bash
+#
 # Usage:
 #   1. Make the script executable:
 #     chmod +x go-env-install.sh
@@ -17,168 +20,134 @@
 # Exit on error
 set -e
 
-go_install() {
-  # Ask the user for the Go installation path
-  if [[ -z "$GO_INSTALL_DIR" ]]; then
-
-    # Remove any existing Go installation
-    if [[ -d "$GO_INSTALL_DIR/go" ]]; then
-      echo "Removing existing Go installation in $GO_INSTALL_DIR"
-      rm -rf "$GO_INSTALL_DIR/go"
-    fi
-    if [[ -d "/usr/local/go" ]]; then
-      echo "Removing existing Go installation in $GO_INSTALL_DIR"
-      sudo rm -rf "/usr/local/go"
-    fi
-
-    echo -e "\nShall we install Go for the current [U]ser or [s]ystem-wide (requires root)?"
-    read -r answer
-
-    case $answer in
-      [Uu]|"")
-        GO_INSTALL_DIR="$HOME/.local/share"
-
-        # Query the latest Go version
-        GO_INSTALL_VER="$(curl -s https://go.dev/VERSION?m=text | grep -oP 'go\K[0-9.]+')"
-
-        echo "Downloading the latest version..."
-        wget "https://go.dev/dl/go$GO_INSTALL_VER.linux-amd64.tar.gz" -O /tmp/go.tar.gz
-
-        echo "Installing Go locally in $GO_INSTALL_DIR"
-        tar -C "$GO_INSTALL_DIR" -xzf /tmp/go.tar.gz
-
-        if [[ $? == 0 ]]; then
-          echo "Go has been successfully installed in $GO_INSTALL_DIR/go"
-        else
-          echo "Failed to install Go. Please check the logs."
-          return 1
-        fi
-
-        echo -n "Do you want to add Go to your PATH? [Y/n] "
-        read -r answer
-
-        case $answer in
-          [Yy]|"")
-            # TODO: Add support for other shells (e.g., zsh, fish)
-            echo "export PATH=\$PATH:$GO_INSTALL_DIR/go/bin" >> "$HOME/.bashrc"
-            echo "Go has been added to your PATH. Please restart your terminal or run 'source ~/.bashrc' to apply the changes."
-            ;;
-          [Nn])
-            echo "Go has been installed, but not added to your PATH. You can add it manually later."
-            ;;
-          *)
-            echo "Invalid input. Quitting."
-            return 1
-            ;;
-        esac
-        ;;
-      [Ss])
-        GO_INSTALL_DIR="/usr/local"
-
-        # Quit if not running as root
-        if [[ $EUID -ne 0 ]]; then
-          echo "This option requires root privileges. Please run as root or use sudo."
-          return 1
-        fi
-
-        # Query the latest Go version
-        GO_INSTALL_VER="$(curl -s https://go.dev/VERSION?m=text | grep -oP 'go\K[0-9.]+')"
-
-        echo "Downloading the latest version..."
-        wget "https://go.dev/dl/go$GO_INSTALL_VER.linux-amd64.tar.gz" -O /tmp/go.tar.gz
-
-        echo "Installing Go locally in $GO_INSTALL_DIR"
-        sudo tar -C "$GO_INSTALL_DIR" -xzf /tmp/go.tar.gz
-
-        if [[ $? == 0 ]]; then
-          echo "Go has been successfully installed in $GO_INSTALL_DIR/go"
-        else
-          echo "Failed to install Go. Please check the logs."
-          return 1
-        fi
-
-        echo -n "Do you want to add Go to your PATH? [Y/n] "
-        read -r answer
-
-        case $answer in
-          [Yy]|"")
-            # TODO: Add support for other shells (e.g., zsh, fish)
-            echo "export PATH=\$PATH:$GO_INSTALL_DIR/go/bin" >> "$HOME/.bashrc"
-            echo "Go has been added to your PATH. Please restart your terminal or run 'source ~/.bashrc' to apply the changes."
-            ;;
-          [Nn])
-            echo "Go has been installed, but not added to your PATH. You can add it manually later."
-            ;;
-          *)
-            echo "Invalid input. Quitting."
-            return 1
-            ;;
-        esac
-        ;;
-      *)
-        echo "Invalid input. Quitting."
-        return 1
-        ;;
-    esac
-  fi
-
-  return 0
+# Print text to the terminal
+print_err() {
+  echo -e "\e[1;31m$1\e[0m" >&2
+}
+print_info() {
+  echo -e "\e[1;37m$1\e[0m" >&1
+}
+print_warn() {
+  echo -e "\e[1;33m$1\e[0m" >&1
 }
 
 main() {
-  # Declare the variables.
-  GO_VERSION="$(go version | awk '{print $3}' | sed 's/go//')"
-  GO_INSTALL_DIR="$(command -v go | sed 's|/go.*$||')"
-  GO_LATEST_VER="$(curl -s https://go.dev/VERSION?m=text | grep -oP 'go\K[0-9.]+')"
+  #
+  # VARIABLE DECLARATIONS
+  #
+  
+  # Installed GO version (1.24.3)
+  GO_VERSION="$(go version 2>/dev/null | \
+  awk '{print $3}' | \
+  sed 's/go//')"
 
-  # Detect if Go is already installed.
-  if command -v go &>/dev/null; then
-    # Query the current Go version and installation directory.
+  # Go installation directory (/usr/local)
+  GO_INSTALL_DIR="$(command -v go 2>/dev/null | \
+  sed 's|/go.*$||')"
+  
+  # Latest Go version (1.25.0)
+  GO_LATEST_VER="$(curl -s https://go.dev/VERSION?m=text | \
+  grep -oP 'go\K[0-9.]+')"
 
-    echo "Go installation detected. Current version: $GO_VERSION"
-    echo "Latest version: $GO_LATEST_VER"
+  #
+  # PRELIMINARY CHECKS
+  #
 
-    if [[ "$GO_VERSION" == "$GO_LATEST_VER" ]]; then
-      echo "You already have the latest version of Go installed."
-      return 0
-    else
-      echo -e "\nWould you like to update Go? [Y/n]"
+  # This script is for Go toolchain installation only,
+  # so exit if Go is already installed.
+  if [[ -n "$GO_INSTALL_DIR" && "$GO_VERSION" == "$GO_LATEST_VER" ]]; then
+    print_info "You already have the latest Go toolchain version: $GO_VERSION"
+    return 0
+  fi
+  if [[ -n "$GO_INSTALL_DIR" && "$GO_VERSION" != "$GO_LATEST_VER" ]]; then
+    print_warn "A new Go toolchain version is available: $GO_LATEST_VER (current: $GO_VERSION)"
+    print_info "Run './go-env-update.sh' to update."
+    return 0
+  fi
+
+  #
+  # INSTALLATION
+  #
+
+  print_info "Do you want to install Go version $GO_LATEST_VER for the current [u]ser or [s]ystem-wide?"
+  read -r answer
+
+  case $answer in
+    [Uu]|"")
+      GO_INSTALL_DIR="$HOME/.local/share"
+
+      print_info "Downloading the latest Go toolchain version..."
+      wget "https://go.dev/dl/go$GO_LATEST_VER.linux-amd64.tar.gz" -O /tmp/go.tar.gz
+
+      print_info "Installing Go in $GO_INSTALL_DIR"
+      tar -C "$GO_INSTALL_DIR" -xzf /tmp/go.tar.gz
+
+      if [[ $? == 0 ]]; then
+        print_info "\e[1;32mGo has been successfully installed in $GO_INSTALL_DIR/go"
+      else
+        print_err "Failed to install the latest Go toolchain. Please check the output for details on the error."
+        return 1
+      fi
+
+      print_warn "Do you want to add Go to your PATH? [Y/n]"
       read -r answer
 
       case $answer in
         [Yy]|"")
-          echo "Updating Go to the latest version..."
-          go_install
+          # TODO: Add support for other shells (e.g., zsh, fish)
+          echo "export PATH=\$PATH:$GO_INSTALL_DIR/go/bin" >> "$HOME/.bashrc"
+          print_info "\e[1;32mGo has been added to your PATH."
+          print_info "Please restart your terminal or run 'source ~/.bashrc' to apply the changes."
           ;;
-        [Nn])
-          echo "Keeping the current Go version: $GO_VERSION"
-          ;;
-        *)
-          echo "Invalid input. Quitting."
-          return 1
+        [Nn]|*)
+          print_warn "Go has been installed, but not added to your PATH. You can add it manually later."
           ;;
       esac
-    fi
-  else
-    echo "Go is not installed. Would you like to install it now? [Y/n]"
-    read -r answer
+      ;;
+    [Ss])
+      GO_INSTALL_DIR="/usr/local"
 
-    case $answer in
-      [Yy]|"")
-        echo "Installing the latest version of Go..."
-        go_install
-        ;;
-      [Nn])
-        echo "Skipping Go installation."
-        ;;
-      *)
-        echo "Invalid input. Quitting."
+      # Quit if not running as root
+      if [[ $EUID -ne 0 ]]; then
+        print_err "This option requires root privileges. Please run as root or use sudo."
         return 1
-        ;;
-    esac
-  fi
+      fi
+
+      print_info "Downloading the latest version..."
+      wget "https://go.dev/dl/go$GO_LATEST_VER.linux-amd64.tar.gz" -O /tmp/go.tar.gz
+
+      print_info "Installing Go in $GO_INSTALL_DIR"
+      sudo tar -C "$GO_INSTALL_DIR" -xzf /tmp/go.tar.gz
+
+      if [[ $? == 0 ]]; then
+        print_info "\e[1;32mGo has been successfully installed in $GO_INSTALL_DIR/go"
+      else
+        print_err "Failed to install the latest Go toolchain. Please check the output for details on the error."
+        return 1
+      fi
+
+      print_warn "Do you want to add Go to your PATH? [Y/n]"
+      read -r answer
+
+      case $answer in
+        [Yy]|"")
+          # TODO: Add support for other shells (e.g., zsh, fish)
+          echo "export PATH=\$PATH:$GO_INSTALL_DIR/go/bin" >> "$HOME/.bashrc"
+          print_info "\e[1;32mGo has been added to your PATH."
+          print_info "Please restart your terminal or run 'source ~/.bashrc' to apply the changes."
+          ;;
+        [Nn]|*)
+          print_warn "Go has been installed, but not added to your PATH. You can add it manually later."
+          ;;
+      esac
+      ;;
+    *)
+      print_err "Invalid input. Please enter 'u' for user or 's' for system-wide installation."
+      ;;
+  esac
 
   return 0
 }
 
+# Start the "main" function on script execution.
 main
