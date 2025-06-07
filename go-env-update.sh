@@ -79,7 +79,7 @@ main() {
 
   # Prompt user for confirmation before proceeding.
   print_info "Do you want to update the Go toolchain from version $GO_VERSION to $GO_LATEST_VER? [y/N]"
-  read -p $answer
+  read -r answer
 
   case $answer in
     # Only proceed if the user explicitly confirms.
