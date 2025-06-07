@@ -70,7 +70,7 @@ main() {
     return 0
   fi
 
-  # If installation directory is /usr/local/go, sudo/root is required.
+  # If installation directory is /usr/local/go, sudo or root is required.
   if [[ "$GO_INSTALL_DIR" == "/usr/local" && $EUID -ne 0 ]]; then
     print_warn "Detected system-wide installation."
     print_err "This option requires root privileges. Please run the script as root or use sudo."
