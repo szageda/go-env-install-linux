@@ -109,7 +109,7 @@ main() {
 
       # Quit if not running as root
       if [[ $EUID -ne 0 ]]; then
-        print_err "This option requires root privileges. Please run as root or use sudo."
+        print_err "This option requires root privileges. Please run the script as root or use sudo."
         return 1
       fi
 

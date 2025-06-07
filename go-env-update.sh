@@ -73,9 +73,24 @@ main() {
   # If installation directory is /usr/local/go, sudo/root is required.
   if [[ "$GO_INSTALL_DIR" == "/usr/local" && $EUID -ne 0 ]]; then
     print_warn "Detected system-wide installation."
-    print_err "This script requires root privileges to update the Go toolchain."
+    print_err "This option requires root privileges. Please run the script as root or use sudo."
     return 1
   fi
+
+  # Prompt user for confirmation before proceeding.
+  print_info "Do you want to update the Go toolchain from version $GO_VERSION to $GO_LATEST_VER? [y/N]"
+  read -p $answer
+
+  case $answer in
+    # Only proceed if the user explicitly confirms.
+    [Yy])
+      print_info "Proceeding with the update..."
+      ;;
+    *)
+      print_info "Update cancelled."
+      return 0
+      ;;
+  esac
 
   #
   # UPDATE
