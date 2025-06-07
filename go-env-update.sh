@@ -56,7 +56,7 @@ main() {
   # PRELIMINARY CHECKS
   #
 
-  # This script is for Go toolchain update only,
+  # This script is for updating the Go toolchain only,
   # so exit if Go is not installed.
   if [[ -z "$GO_INSTALL_DIR" ]]; then
     print_err "Go toolchain is not installed."

@@ -53,7 +53,7 @@ main() {
   # PRELIMINARY CHECKS
   #
 
-  # This script is for Go toolchain installation only,
+  # This script is for installing the Go toolchain only,
   # so exit if Go is already installed.
   if [[ -n "$GO_INSTALL_DIR" && "$GO_VERSION" == "$GO_LATEST_VER" ]]; then
     print_info "You already have the latest Go toolchain version: $GO_VERSION"
