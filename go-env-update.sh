@@ -39,7 +39,7 @@ main() {
   # VARIABLE DECLARATIONS
   #
   
-  # Installed GO version (1.24.3)
+  # Installed Go version (1.24.3)
   GO_VERSION="$(go version 2>/dev/null | \
   awk '{print $3}' | \
   sed 's/go//')"
