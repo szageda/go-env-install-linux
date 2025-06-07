@@ -27,7 +27,7 @@ git clone https://github.com/szageda/go-toolchain-install-linux.git
 2. Navigate into the cloned directory.
 
 ```shell
-cd go-toolchain-install-linux-main
+cd go-toolchain-install-linux
 ```
 
 3. Make the scripts executable.
