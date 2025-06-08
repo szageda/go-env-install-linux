@@ -69,7 +69,7 @@ main() {
   # INSTALLATION
   #
 
-  print_info "Do you want to install Go version $GO_LATEST_VER for the current [u]ser or [s]ystem-wide?"
+  print_info "Do you want to install Go version $GO_LATEST_VER for the current [U]ser or [s]ystem-wide?"
   read -r answer
 
   case $answer in
