@@ -20,10 +20,8 @@
 #   2. Run it:
 #     ./go-env-update.sh
 
-# Exit on error.
 set -e
 
-# Print text to the terminal.
 print_err() {
   echo -e "\e[1;31m$1\e[0m" >&2
 }
@@ -35,50 +33,34 @@ print_warn() {
 }
 
 main() {
-  #
-  # VARIABLE DECLARATIONS
-  #
-  
-  # Installed Go version (1.24.3)
   GO_VERSION="$(go version 2>/dev/null | \
   awk '{print $3}' | \
   sed 's/go//')"
 
-  # Go installation directory (/usr/local)
   GO_INSTALL_DIR="$(command -v go 2>/dev/null | \
   sed 's|/go.*$||')"
   
-  # Latest Go version (1.25.0)
   GO_LATEST_VER="$(curl -s https://go.dev/VERSION?m=text | \
   grep -oP 'go\K[0-9.]+')"
 
-  #
-  # PRELIMINARY CHECKS
-  #
-
-  # This script is for updating the Go toolchain only,
-  # so exit if Go is not installed.
   if [[ -z "$GO_INSTALL_DIR" ]]; then
     print_err "Go toolchain is not installed."
     print_info "Run './go-env-install.sh' to install it."
     return 0
   fi
 
-  # Exit if the installed Go toolchain version is already the latest.
   if [[ "$GO_VERSION" == "$GO_LATEST_VER" ]]; then
     print_info "You already have the latest Go toolchain version: $GO_VERSION"
     return 0
   fi
 
-  # If installation directory is /usr/local/go, sudo or root is required.
   if [[ "$GO_INSTALL_DIR" == "/usr/local" && $EUID -ne 0 ]]; then
     print_warn "Detected system-wide installation."
     print_err "This option requires root privileges. Please run the script as root or use sudo."
     return 1
   fi
 
-  # Prompt user for confirmation before proceeding.
-  print_info "Do you want to update the Go toolchain from version $GO_VERSION to $GO_LATEST_VER? [y/N]"
+  print_info "Are you sure to update the Go toolchain ($GO_VERSION -> $GO_LATEST_VER)? [y/N]"
   read -r answer
 
   case $answer in
@@ -92,43 +74,29 @@ main() {
       ;;
   esac
 
-  #
-  # UPDATE
-  #
-
-  print_info "Dowloading the latest Go toolchain version: $GO_LATEST_VER (current: $GO_VERSION)"
+  print_info "Dowloading the latest Go toolchain version..."
   wget "https://go.dev/dl/go$GO_LATEST_VER.linux-amd64.tar.gz" -O /tmp/go.tar.gz
 
-  if [[ $? == 0 ]]; then
-    print_info "Downloaded the latest Go toolchain version successfully."
-  else
+  if [[ $? != 0 ]]; then
     print_err "Failed to download the latest Go toolchain. Please check the output for details on the error."
-    return 1
   fi
 
-  print_info "Removing the current Go toolchain installation..."
   if [[ "$GO_INSTALL_DIR" == "/usr/local" ]]; then
     sudo rm -rf "$GO_INSTALL_DIR/go" &>/dev/null
-  else
-    rm -rf "$GO_INSTALL_DIR/go" &>/dev/null
-  fi
-
-  print_info "Installing the new Go toolchain version in $GO_INSTALL_DIR"
-  if [[ "$GO_INSTALL_DIR" == "/usr/local" ]]; then
     sudo tar -C "$GO_INSTALL_DIR" -xzf /tmp/go.tar.gz
   else
+    rm -rf "$GO_INSTALL_DIR/go" &>/dev/null
     tar -C "$GO_INSTALL_DIR" -xzf /tmp/go.tar.gz
   fi
 
   if [[ $? == 0 ]]; then
     print_info "\e[1;32mGo has been successfully updated."
   else
-    print_err "Failed to install the latest Go toolchain. Please check the output for details on the error."
+    print_err "Failed to update to the latest Go version. Please check the output for details on the error."
     return 1
   fi
 
   return 0
 }
 
-# Start the "main" function on script execution.
 main

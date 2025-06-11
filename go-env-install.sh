@@ -17,10 +17,8 @@
 #   2. Run it:
 #     ./go-env-install.sh
 
-# Exit on error.
 set -e
 
-# Print text to the terminal.
 print_err() {
   echo -e "\e[1;31m$1\e[0m" >&2
 }
@@ -32,29 +30,16 @@ print_warn() {
 }
 
 main() {
-  #
-  # VARIABLE DECLARATIONS
-  #
-  
-  # Installed Go version (1.24.3)
   GO_VERSION="$(go version 2>/dev/null | \
   awk '{print $3}' | \
   sed 's/go//')"
 
-  # Go installation directory (/usr/local)
   GO_INSTALL_DIR="$(command -v go 2>/dev/null | \
   sed 's|/go.*$||')"
   
-  # Latest Go version (1.25.0)
   GO_LATEST_VER="$(curl -s https://go.dev/VERSION?m=text | \
   grep -oP 'go\K[0-9.]+')"
 
-  #
-  # PRELIMINARY CHECKS
-  #
-
-  # This script is for installing the Go toolchain only,
-  # so exit if Go is already installed.
   if [[ -n "$GO_INSTALL_DIR" && "$GO_VERSION" == "$GO_LATEST_VER" ]]; then
     print_info "You already have the latest Go toolchain version: $GO_VERSION"
     return 0
@@ -65,10 +50,6 @@ main() {
     return 0
   fi
 
-  #
-  # INSTALLATION
-  #
-
   print_info "Do you want to install Go version $GO_LATEST_VER for the current [U]ser or [s]ystem-wide?"
   read -r answer
 
@@ -78,8 +59,6 @@ main() {
 
       print_info "Downloading the latest Go toolchain version..."
       wget "https://go.dev/dl/go$GO_LATEST_VER.linux-amd64.tar.gz" -O /tmp/go.tar.gz
-
-      print_info "Installing Go in $GO_INSTALL_DIR"
       tar -C "$GO_INSTALL_DIR" -xzf /tmp/go.tar.gz
 
       if [[ $? == 0 ]]; then
@@ -107,7 +86,6 @@ main() {
     [Ss])
       GO_INSTALL_DIR="/usr/local"
 
-      # Quit if not running as root
       if [[ $EUID -ne 0 ]]; then
         print_err "This option requires root privileges. Please run the script as root or use sudo."
         return 1
@@ -115,8 +93,6 @@ main() {
 
       print_info "Downloading the latest version..."
       wget "https://go.dev/dl/go$GO_LATEST_VER.linux-amd64.tar.gz" -O /tmp/go.tar.gz
-
-      print_info "Installing Go in $GO_INSTALL_DIR"
       sudo tar -C "$GO_INSTALL_DIR" -xzf /tmp/go.tar.gz
 
       if [[ $? == 0 ]]; then
@@ -149,5 +125,4 @@ main() {
   return 0
 }
 
-# Start the "main" function on script execution.
 main
